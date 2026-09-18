@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0b1020">
-<title>吉他音符位置检测</title>
+<title>每日吉他和弦考试</title>
 <style>
-:root{--bg:#09111f;--panel:#111c30;--text:#f5f7fb;--muted:#9ba9c0}
+:root{--panel:#111c30;--text:#f5f7fb;--muted:#9ba9c0;--ok:#16a34a;--bad:#dc2626;--accent:#0ea5e9}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%;background:linear-gradient(180deg,#08101d,#10192b);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
 body{padding:14px 12px 32px}
@@ -15,14 +15,27 @@ body{padding:14px 12px 32px}
 h1{font-size:23px;margin:6px 0}
 .subtitle{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:12px}
 .card{background:#111c30;border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:13px;margin-bottom:12px}
+.examHead{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.examLabel{font-size:12px;color:var(--muted)}
+.examChord{font-size:42px;font-weight:900;letter-spacing:.5px;margin-top:3px}
+.badge{padding:8px 10px;border-radius:999px;background:#24334d;color:#cbd5e1;font-size:12px;font-weight:800;white-space:nowrap}
+.badge.pass{background:#166534;color:#dcfce7}
+.examActions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.examBtn{min-height:44px;border:0;border-radius:12px;padding:10px 8px;color:#fff;background:#263653;font:inherit;font-weight:800}
+.examBtn.primary{background:#0369a1}.examBtn.ok{background:#166534}.examBtn.warn{background:#7c2d12}
+.examBtn:disabled{opacity:.45}
+.result{margin-top:10px;border-radius:12px;padding:10px 12px;background:#0b1425;color:#cbd5e1;font-size:13px;line-height:1.55}
+.result.good{background:#052e16;color:#dcfce7}.result.bad{background:#3f0d12;color:#fee2e2}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;color:#aebbd0;font-size:12px}
+.stat{background:#0b1425;border-radius:999px;padding:6px 9px}
 .toolbar{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
 button{border:0;color:#fff;font:inherit}
-.tool{border-radius:12px;padding:11px 5px;background:#263653;font-size:15px;font-weight:800}
+.tool{min-height:44px;border-radius:12px;padding:10px 5px;background:#263653;font-size:15px;font-weight:800}
 .tool.active{outline:3px solid #fff}
 .f1btn{background:#0284c7}.f2btn{background:#7c3aed}.f3btn{background:#db2777}.f4btn{background:#ea580c}
 .erase{background:#475569}.clear{background:#8b1e1e}
 .controls{display:flex;gap:8px;flex-wrap:wrap}
-.ctrl{padding:9px 11px;border-radius:10px;background:#24334d;font-weight:700}
+.ctrl{min-height:42px;padding:9px 11px;border-radius:10px;background:#24334d;font-weight:700}
 .ctrl.on{background:#0369a1}
 .info{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}
 .infoBox{background:#0b1425;border-radius:12px;padding:9px;text-align:center}
@@ -30,8 +43,8 @@ button{border:0;color:#fff;font:inherit}
 .infoBox b{font-size:16px}
 .status{margin-top:9px;font-size:12px;color:#b9c7db}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.board{min-width:950px;padding:8px 12px 18px;background:linear-gradient(180deg,#945f39,#73452b);border-radius:14px;overflow:hidden}
-.headerRow,.stringRow{display:grid;grid-template-columns:70px 55px repeat(12,1fr)}
+.board{min-width:590px;padding:8px 10px 16px;background:linear-gradient(180deg,#945f39,#73452b);border-radius:14px;overflow:hidden}
+.headerRow,.stringRow{display:grid;grid-template-columns:74px 52px repeat(5,1fr)}
 .headerRow{height:30px;color:#f8ede5;font-size:11px;align-items:center}
 .headerRow>div{text-align:center}
 .stringRow{height:58px;position:relative}
@@ -39,21 +52,51 @@ button{border:0;color:#fff;font:inherit}
 .cell{position:relative;display:flex;align-items:center;justify-content:center;border-left:2px solid rgba(238,241,246,.78);cursor:pointer;touch-action:manipulation}
 .cell:last-child{border-right:2px solid rgba(238,241,246,.78)}
 .cell.nut{border-left:5px solid #fff}
-.stringRow:after{content:"";position:absolute;left:70px;right:0;top:50%;z-index:2;pointer-events:none;height:2px;background:linear-gradient(180deg,#fff,#71717a);box-shadow:0 1px 1px rgba(0,0,0,.5)}
+.cell.wrong{background:rgba(220,38,38,.28)}
+.cell.expected{background:rgba(22,163,74,.20)}
+.stringRow:after{content:"";position:absolute;left:74px;right:0;top:50%;z-index:2;pointer-events:none;height:2px;background:linear-gradient(180deg,#fff,#71717a);box-shadow:0 1px 1px rgba(0,0,0,.5)}
 .stringRow.s6:after{height:5px}.stringRow.s5:after{height:4.3px}.stringRow.s4:after{height:3.7px}.stringRow.s3:after{height:3px}.stringRow.s2:after{height:2.4px}.stringRow.s1:after{height:1.7px}
 .marker{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:16px;border:2px solid rgba(255,255,255,.8);position:relative;z-index:5;box-shadow:0 2px 7px rgba(0,0,0,.35)}
+.marker.answer{outline:3px solid #86efac;outline-offset:2px}
 .m1{background:#0284c7}.m2{background:#7c3aed}.m3{background:#db2777}.m4{background:#ea580c}
 .noteLabel{position:absolute;right:3px;bottom:2px;z-index:4;font-size:9px;font-weight:800;background:rgba(0,0,0,.4);padding:1px 3px;border-radius:4px}
 .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;color:#dce5f2;font-size:12px}
 .dot{width:18px;height:18px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-size:11px;font-weight:800}
 .help{font-size:13px;color:var(--muted);line-height:1.7}
-@media(max-width:520px){.toolbar{grid-template-columns:repeat(3,1fr)}.info{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){
+ .toolbar{grid-template-columns:repeat(3,1fr)}
+ .info{grid-template-columns:repeat(2,1fr)}
+ .examActions{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>🎸 吉他音符位置检测</h1>
-<div class="subtitle">选择 1 / 2 / 3 / 4，再点弦和品位。页面会自动显示第几弦、第几品、音符和频率。</div>
+<h1>🎸 每日吉他和弦考试</h1>
+<div class="subtitle">先看今天的和弦名字，再自己把 1 / 2 / 3 / 4 摆到指板上。提交后才判分；答对后解锁扫弦试听。</div>
+
+<section class="card">
+  <div class="examHead">
+    <div>
+      <div class="examLabel">今日题目</div>
+      <div class="examChord" id="examChord">—</div>
+    </div>
+    <div class="badge" id="passBadge">未完成</div>
+  </div>
+  <div class="stats">
+    <span class="stat" id="dateStat">日期 —</span>
+    <span class="stat" id="attemptStat">尝试 0 次</span>
+    <span class="stat" id="streakStat">连续 0 天</span>
+  </div>
+  <div class="examActions">
+    <button class="examBtn primary" id="submitBtn">提交答案</button>
+    <button class="examBtn" id="retryBtn">重新摆放</button>
+    <button class="examBtn warn" id="revealBtn">显示答案</button>
+    <button class="examBtn ok" id="strumBtn" disabled>🎵 扫弦试听</button>
+  </div>
+  <div class="result" id="examResult" aria-live="polite">只需要标出需要按住的手指位置；空弦和不弹的弦不用标。</div>
+</section>
+
 <section class="card">
 <div class="toolbar">
 <button class="tool f1btn active" data-finger="1">1 食指</button>
@@ -67,9 +110,10 @@ button{border:0;color:#fff;font:inherit}
 <span><i class="dot m1">1</i> 食指</span><span><i class="dot m2">2</i> 中指</span><span><i class="dot m3">3</i> 无名指</span><span><i class="dot m4">4</i> 小指</span>
 </div>
 </section>
+
 <section class="card">
 <div class="controls">
-<button class="ctrl on" id="noteToggle">显示音名：开</button>
+<button class="ctrl" id="noteToggle">显示音名：关</button>
 <button class="ctrl on" id="soundToggle">点击发声：开</button>
 <button class="ctrl" id="undoBtn">↶ 撤销</button>
 </div>
@@ -81,9 +125,10 @@ button{border:0;color:#fff;font:inherit}
 </div>
 <div class="status" id="status">当前工具：1 食指</div>
 </section>
+
 <section class="card scroll">
 <div class="board" id="board">
-<div class="headerRow"><div>弦</div><div>空弦</div><div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div><div>8</div><div>9</div><div>10</div><div>11</div><div>12</div></div>
+<div class="headerRow" id="headerRow"></div>
 <div class="stringRow s1" data-string="1" data-open-midi="64"><div class="stringLabel">1弦 E4</div></div>
 <div class="stringRow s2" data-string="2" data-open-midi="59"><div class="stringLabel">2弦 B3</div></div>
 <div class="stringRow s3" data-string="3" data-open-midi="55"><div class="stringLabel">3弦 G3</div></div>
@@ -92,68 +137,251 @@ button{border:0;color:#fff;font:inherit}
 <div class="stringRow s6" data-string="6" data-open-midi="40"><div class="stringLabel">6弦 E2</div></div>
 </div>
 </section>
-<section class="card help"><b style="color:white">使用方法</b><br>① 点 1、2、3、4 选择手指。<br>② 左右滑动指板，找到品位。<br>③ 点某根弦的某一品，例如「2弦 · 1品」。<br>④ 页面自动显示 C4 等音符，并可试听。<br>⑤ 标错可用删除、撤销或清空。</section>
+
+<section class="card help">
+<b style="color:white">考试规则</b><br>
+① 页面每天自动给一个基础和弦。<br>
+② 你只摆需要按住的手指，不需要标空弦。<br>
+③ “提交答案”只告诉你对错和错误数量，不马上泄露答案。<br>
+④ 答对后可以点“扫弦试听”，听完整和弦。<br>
+⑤ “显示答案”会用绿色轮廓显示正确手指位置。
+</section>
 </div>
+
 <script>
 (function(){
 "use strict";
+
 var noteNames=["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
-var selected="1",erase=false,showNotes=true,soundOn=true,audioCtx=null,marks={},history=[];
-try{marks=JSON.parse(localStorage.getItem("guitarMarksV2")||"{}")}catch(e){marks={}}
+var chordOrder=["Em","Am","C","G","D","Dm"];
+var chords={
+  "Em":{frets:[0,2,2,0,0,0],marks:{"5-2":"2","4-2":"3"}},
+  "Am":{frets:[null,0,2,2,1,0],marks:{"4-2":"2","3-2":"3","2-1":"1"}},
+  "C": {frets:[null,3,2,0,1,0],marks:{"5-3":"3","4-2":"2","2-1":"1"}},
+  "G": {frets:[3,2,0,0,0,3],marks:{"6-3":"2","5-2":"1","1-3":"3"}},
+  "D": {frets:[null,null,0,2,3,2],marks:{"3-2":"1","2-3":"3","1-2":"2"}},
+  "Dm":{frets:[null,null,0,2,3,1],marks:{"3-2":"2","2-3":"3","1-1":"1"}}
+};
+
+var selected="1",erase=false,showNotes=false,soundOn=true,audioCtx=null,marks={},history=[];
+var revealAnswer=false,evaluatedWrongKeys={},todayKey="",todayChord="",attempts=0,passed=false;
+
+function localDateKey(){
+  var d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");
+  return y+"-"+m+"-"+day;
+}
+function dailyChordForDate(){
+  var d=new Date(),dayNo=Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000);
+  return chordOrder[((dayNo%chordOrder.length)+chordOrder.length)%chordOrder.length];
+}
 function noteName(midi){return noteNames[midi%12]+(Math.floor(midi/12)-1)}
 function freq(midi){return 440*Math.pow(2,(midi-69)/12)}
-function save(){try{localStorage.setItem("guitarMarksV2",JSON.stringify(marks))}catch(e){}}
-function snapshot(){history.push(JSON.stringify(marks));if(history.length>30)history.shift()}
 function key(s,f){return s+"-"+f}
-function play(midi){
-if(!soundOn)return;
-try{
-if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-if(audioCtx.state==="suspended")audioCtx.resume();
-var now=audioCtx.currentTime,f=freq(midi),out=audioCtx.createGain();
-out.gain.setValueAtTime(.0001,now);out.gain.exponentialRampToValueAtTime(.18,now+.01);out.gain.exponentialRampToValueAtTime(.0001,now+1.15);out.connect(audioCtx.destination);
-[1,2,3].forEach(function(h,i){var o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=i===0?"triangle":"sine";o.frequency.value=f*h;g.gain.value=[1,.30,.12][i];o.connect(g);g.connect(out);o.start(now);o.stop(now+1.2)})
-}catch(e){}
+function safeGet(name,fallback){
+  try{var v=localStorage.getItem(name);return v===null?fallback:JSON.parse(v)}catch(e){return fallback}
+}
+function safeSet(name,value){try{localStorage.setItem(name,JSON.stringify(value))}catch(e){}}
+function snapshot(){history.push(JSON.stringify(marks));if(history.length>30)history.shift()}
+function saveMarks(){safeSet("guitarQuizMarks-"+todayKey,marks)}
+
+function getProgress(){
+  return safeGet("guitarQuizProgress",{passedDates:[]});
+}
+function setPassedToday(){
+  var p=getProgress();
+  if(p.passedDates.indexOf(todayKey)===-1)p.passedDates.push(todayKey);
+  p.passedDates=p.passedDates.slice(-120);
+  safeSet("guitarQuizProgress",p);
+}
+function calcStreak(){
+  var p=getProgress(),set={};
+  p.passedDates.forEach(function(x){set[x]=true});
+  var streak=0,d=new Date();
+  for(var i=0;i<120;i++){
+    var k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    if(set[k]){streak++;d.setDate(d.getDate()-1)}
+    else break;
+  }
+  return streak;
+}
+function updateExamHeader(){
+  document.getElementById("examChord").textContent=todayChord;
+  document.getElementById("dateStat").textContent="日期 "+todayKey;
+  document.getElementById("attemptStat").textContent="尝试 "+attempts+" 次";
+  document.getElementById("streakStat").textContent="连续 "+calcStreak()+" 天";
+  var badge=document.getElementById("passBadge");
+  badge.textContent=passed?"今日已通过":"未完成";
+  badge.classList.toggle("pass",passed);
+  document.getElementById("strumBtn").disabled=!passed && !revealAnswer;
+}
+function setResult(text,type){
+  var el=document.getElementById("examResult");
+  el.textContent=text;
+  el.className="result"+(type?" "+type:"");
+}
+function playMidi(midi,start,volume){
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  var f=freq(midi),out=audioCtx.createGain();
+  out.gain.setValueAtTime(.0001,start);
+  out.gain.exponentialRampToValueAtTime(.15*(volume||1),start+.008);
+  out.gain.exponentialRampToValueAtTime(.0001,start+1.35);
+  out.connect(audioCtx.destination);
+  [1,2,3,4].forEach(function(h,i){
+    var o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type=i===0?"triangle":"sine";
+    o.frequency.setValueAtTime(f*h,start);
+    g.gain.value=[1,.34,.15,.06][i];
+    o.connect(g);g.connect(out);o.start(start);o.stop(start+1.4);
+  });
+}
+function playSingle(midi){
+  if(!soundOn)return;
+  try{
+    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==="suspended")audioCtx.resume();
+    playMidi(midi,audioCtx.currentTime,1);
+  }catch(e){}
+}
+function strumChord(){
+  try{
+    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==="suspended")audioCtx.resume();
+    var frets=chords[todayChord].frets;
+    var openMidi=[40,45,50,55,59,64];
+    var t=audioCtx.currentTime+.03;
+    for(var i=0;i<6;i++){
+      if(frets[i]===null)continue;
+      playMidi(openMidi[i]+frets[i],t,1);
+      t+=.055;
+    }
+  }catch(e){}
 }
 function updateInfo(s,f,midi){
-document.getElementById("stringInfo").textContent=s+" 弦";
-document.getElementById("fretInfo").textContent=f===0?"空弦":f+" 品";
-document.getElementById("noteInfo").textContent=noteName(midi);
-document.getElementById("freqInfo").textContent=freq(midi).toFixed(1)+" Hz";
+  document.getElementById("stringInfo").textContent=s+" 弦";
+  document.getElementById("fretInfo").textContent=f===0?"空弦":f+" 品";
+  document.getElementById("noteInfo").textContent=noteName(midi);
+  document.getElementById("freqInfo").textContent=freq(midi).toFixed(1)+" Hz";
+}
+function buildHeader(){
+  var h=document.getElementById("headerRow");
+  h.innerHTML="<div>弦</div><div>空弦</div><div>1</div><div>2</div><div>3</div><div>4</div><div>5</div>";
 }
 function buildCells(){
-var rows=document.querySelectorAll(".stringRow");
-Array.prototype.forEach.call(rows,function(row){
-while(row.children.length>1)row.removeChild(row.lastChild);
-var s=parseInt(row.getAttribute("data-string"),10),openMidi=parseInt(row.getAttribute("data-open-midi"),10);
-for(var fret=0;fret<=12;fret++){
-(function(f){
-var midi=openMidi+f,c=document.createElement("div");c.className="cell"+(f===0?" nut":"");
-if(showNotes){var nl=document.createElement("span");nl.className="noteLabel";nl.textContent=noteName(midi);c.appendChild(nl)}
-var k=key(s,f);
-if(marks[k]){var m=document.createElement("div");m.className="marker m"+marks[k];m.textContent=marks[k];c.appendChild(m)}
-c.addEventListener("click",function(){updateInfo(s,f,midi);play(midi);snapshot();if(erase)delete marks[k];else marks[k]=selected;save();buildCells()});
-row.appendChild(c)
-})(fret)
+  buildHeader();
+  var expected=chords[todayChord].marks;
+  var rows=document.querySelectorAll(".stringRow");
+  Array.prototype.forEach.call(rows,function(row){
+    while(row.children.length>1)row.removeChild(row.lastChild);
+    var s=parseInt(row.getAttribute("data-string"),10),openMidi=parseInt(row.getAttribute("data-open-midi"),10);
+    for(var fret=0;fret<=5;fret++){
+      (function(f){
+        var midi=openMidi+f,k=key(s,f),c=document.createElement("div");
+        c.className="cell"+(f===0?" nut":"");
+        if(evaluatedWrongKeys[k])c.classList.add("wrong");
+        if(revealAnswer&&expected[k])c.classList.add("expected");
+        if(showNotes){
+          var nl=document.createElement("span");nl.className="noteLabel";nl.textContent=noteName(midi);c.appendChild(nl);
+        }
+        if(marks[k]){
+          var m=document.createElement("div");m.className="marker m"+marks[k];m.textContent=marks[k];c.appendChild(m);
+        }else if(revealAnswer&&expected[k]){
+          var a=document.createElement("div");a.className="marker answer m"+expected[k];a.textContent=expected[k];c.appendChild(a);
+        }else if(revealAnswer&&expected[k]&&marks[k]!==expected[k]){
+          var aa=document.createElement("div");aa.className="marker answer m"+expected[k];aa.textContent=expected[k];c.appendChild(aa);
+        }
+        if(revealAnswer&&expected[k]&&marks[k]){
+          var markers=c.querySelectorAll(".marker");
+          if(markers.length&&marks[k]===expected[k])markers[0].classList.add("answer");
+        }
+        c.addEventListener("click",function(){
+          updateInfo(s,f,midi);playSingle(midi);
+          snapshot();evaluatedWrongKeys={};revealAnswer=false;
+          if(erase)delete marks[k];else marks[k]=selected;
+          saveMarks();buildCells();updateExamHeader();
+        });
+        row.appendChild(c);
+      })(fret);
+    }
+  });
 }
-})
+function evaluate(){
+  attempts++;
+  safeSet("guitarQuizAttempts-"+todayKey,attempts);
+  var expected=chords[todayChord].marks,wrong={},missing=0,extra=0,wrongFinger=0;
+  Object.keys(expected).forEach(function(k){
+    if(!marks[k]){missing++;wrong[k]=true}
+    else if(String(marks[k])!==String(expected[k])){wrongFinger++;wrong[k]=true}
+  });
+  Object.keys(marks).forEach(function(k){
+    if(!expected[k]){extra++;wrong[k]=true}
+  });
+  evaluatedWrongKeys=wrong;
+  var correct=missing===0&&extra===0&&wrongFinger===0&&Object.keys(marks).length===Object.keys(expected).length;
+  if(correct){
+    passed=true;setPassedToday();evaluatedWrongKeys={};
+    setResult("✅ 正确！"+todayChord+" 的手指位置全部正确。现在可以点「扫弦试听」听完整和弦。","good");
+  }else{
+    var bits=[];
+    if(missing)bits.push("少 "+missing+" 个位置");
+    if(wrongFinger)bits.push("有 "+wrongFinger+" 个手指编号不对");
+    if(extra)bits.push("多 "+extra+" 个位置");
+    setResult("还没全对："+bits.join("，")+"。红色位置需要重新检查；你可以继续修改后再次提交。","bad");
+  }
+  buildCells();updateExamHeader();
 }
+function retry(){
+  snapshot();marks={};evaluatedWrongKeys={};revealAnswer=false;saveMarks();buildCells();
+  setResult("已清空。请重新摆出 "+todayChord+"。","");
+  updateExamHeader();
+}
+function reveal(){
+  revealAnswer=true;evaluatedWrongKeys={};buildCells();
+  setResult("答案已显示：绿色轮廓就是 "+todayChord+" 的正确手指位置。你也可以点「扫弦试听」听声音。","");
+  updateExamHeader();
+}
+
+todayKey=localDateKey();
+todayChord=dailyChordForDate();
+marks=safeGet("guitarQuizMarks-"+todayKey,{});
+attempts=safeGet("guitarQuizAttempts-"+todayKey,0);
+var progress=getProgress();
+passed=progress.passedDates.indexOf(todayKey)!==-1;
+
 var fingerBtns=document.querySelectorAll("[data-finger]");
 Array.prototype.forEach.call(fingerBtns,function(btn){
-btn.addEventListener("click",function(){
-selected=btn.getAttribute("data-finger");erase=false;
-Array.prototype.forEach.call(fingerBtns,function(b){b.classList.remove("active")});
-btn.classList.add("active");
-var names=["","食指","中指","无名指","小指"];
-document.getElementById("status").textContent="当前工具："+selected+" "+names[parseInt(selected,10)]
-})
+  btn.addEventListener("click",function(){
+    selected=btn.getAttribute("data-finger");erase=false;
+    Array.prototype.forEach.call(fingerBtns,function(b){b.classList.remove("active")});
+    btn.classList.add("active");
+    var names=["","食指","中指","无名指","小指"];
+    document.getElementById("status").textContent="当前工具："+selected+" "+names[parseInt(selected,10)];
+  });
 });
-document.getElementById("eraseBtn").addEventListener("click",function(){erase=true;Array.prototype.forEach.call(fingerBtns,function(b){b.classList.remove("active")});document.getElementById("status").textContent="当前工具：删除"});
-document.getElementById("clearBtn").addEventListener("click",function(){snapshot();marks={};save();buildCells();document.getElementById("status").textContent="已清空"});
-document.getElementById("undoBtn").addEventListener("click",function(){if(!history.length)return;marks=JSON.parse(history.pop());save();buildCells();document.getElementById("status").textContent="已撤销"});
-document.getElementById("noteToggle").addEventListener("click",function(){showNotes=!showNotes;this.classList.toggle("on",showNotes);this.textContent="显示音名："+(showNotes?"开":"关");buildCells()});
-document.getElementById("soundToggle").addEventListener("click",function(){soundOn=!soundOn;this.classList.toggle("on",soundOn);this.textContent="点击发声："+(soundOn?"开":"关")});
-buildCells();
+document.getElementById("eraseBtn").addEventListener("click",function(){
+  erase=true;Array.prototype.forEach.call(fingerBtns,function(b){b.classList.remove("active")});
+  document.getElementById("status").textContent="当前工具：删除";
+});
+document.getElementById("clearBtn").addEventListener("click",retry);
+document.getElementById("undoBtn").addEventListener("click",function(){
+  if(!history.length)return;
+  marks=JSON.parse(history.pop());evaluatedWrongKeys={};revealAnswer=false;saveMarks();buildCells();
+  document.getElementById("status").textContent="已撤销";
+});
+document.getElementById("noteToggle").addEventListener("click",function(){
+  showNotes=!showNotes;this.classList.toggle("on",showNotes);
+  this.textContent="显示音名："+(showNotes?"开":"关");buildCells();
+});
+document.getElementById("soundToggle").addEventListener("click",function(){
+  soundOn=!soundOn;this.classList.toggle("on",soundOn);
+  this.textContent="点击发声："+(soundOn?"开":"关");
+});
+document.getElementById("submitBtn").addEventListener("click",evaluate);
+document.getElementById("retryBtn").addEventListener("click",retry);
+document.getElementById("revealBtn").addEventListener("click",reveal);
+document.getElementById("strumBtn").addEventListener("click",strumChord);
+
+buildCells();updateExamHeader();
+if(passed)setResult("✅ 你今天已经通过 "+todayChord+"。可以继续扫弦试听，或者重新摆一次巩固记忆。","good");
 })();
 </script>
 </body>
