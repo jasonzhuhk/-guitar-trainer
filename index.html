@@ -1,378 +1,66 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0b1020">
-<title>模拟吉他 A · 基础和弦识别</title>
-<style>
-:root{
-  --bg1:#08101d; --bg2:#10192b; --card:#111c30; --text:#f5f7fb; --muted:#9ba9c0;
-  --wood1:#9b643d; --wood2:#73452b; --accent:#0ea5e9; --good:#16a34a;
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{
-  margin:0;min-height:100%;
-  background:linear-gradient(180deg,var(--bg1),var(--bg2));
-  color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-}
-body{padding:14px 12px 30px}
-.wrap{max-width:720px;margin:auto}
-h1{font-size:23px;margin:4px 0 6px}
-.sub{font-size:13px;line-height:1.55;color:var(--muted);margin-bottom:12px}
-.card{
-  background:var(--card);border:1px solid rgba(255,255,255,.09);
-  border-radius:18px;padding:13px;margin-bottom:12px
-}
-.detect{
-  display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center
-}
-.label{font-size:12px;color:var(--muted)}
-.chordName{font-size:42px;font-weight:900;line-height:1;margin-top:3px}
-.chordName.known{color:#dcfce7}
-.badge{
-  padding:8px 10px;border-radius:999px;background:#24334d;color:#cbd5e1;
-  font-size:12px;font-weight:800;white-space:nowrap
-}
-.badge.known{background:#166534;color:#dcfce7}
-.pattern{margin-top:8px;color:#d7e0ef;font-size:13px}
-.pattern code{background:#0b1425;color:#fff;border-radius:8px;padding:3px 8px;font-size:14px}
-.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-button{border:0;color:#fff;font:inherit}
-.btn{
-  min-height:44px;border-radius:12px;background:#263653;
-  font-weight:800;padding:10px 8px
-}
-.btn.primary{background:#0369a1}
-.btn:disabled{opacity:.42}
-.status{
-  margin-top:10px;background:#0b1425;border-radius:12px;padding:10px 12px;
-  color:#cbd5e1;font-size:13px;line-height:1.5
-}
-.status.good{background:#052e16;color:#dcfce7}
-.board{
-  background:linear-gradient(180deg,var(--wood1),var(--wood2));
-  border-radius:16px;padding:14px 18px 18px;overflow:hidden;
-}
-.stringHeads{
-  position:relative;height:42px;margin:0 18px 6px;
-}
-.stringHead{
-  position:absolute;top:0;transform:translateX(-50%);
-  width:54px;text-align:center;color:#fff;font-size:11px;font-weight:800
-}
-.stringHead b{display:block;font-size:15px}
-.fingerboard{
-  position:relative;height:430px;margin:0 18px;touch-action:manipulation
-}
-.fret{
-  position:absolute;left:0;right:0;height:2px;background:rgba(255,255,255,.88);z-index:1
-}
-.fret.nut{height:6px;background:#fff}
-.string{
-  position:absolute;top:0;bottom:0;transform:translateX(-50%);z-index:2;
-  background:linear-gradient(90deg,#9ca3af,#fff,#6b7280);
-  transform-origin:center center;
-}
-.s6{width:5px}.s5{width:4.4px}.s4{width:3.8px}.s3{width:3px}.s2{width:2.4px}.s1{width:1.8px}
-.string.vibrate{animation:stringVibe .16s linear 3}
-@keyframes stringVibe{
-  0%{transform:translateX(-50%)}
-  25%{transform:translateX(calc(-50% - 3px))}
-  50%{transform:translateX(calc(-50% + 3px))}
-  75%{transform:translateX(calc(-50% - 2px))}
-  100%{transform:translateX(-50%)}
-}
-.hit{
-  position:absolute;width:16%;height:16.66%;
-  transform:translate(-50%,-50%);
-  display:flex;align-items:center;justify-content:center;
-  border-radius:10px;z-index:4
-}
-.hit:active{background:rgba(255,255,255,.08)}
-.pressDot{
-  width:34px;height:34px;border-radius:50%;
-  background:var(--accent);border:2px solid #fff;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:900;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.35)
-}
-.note{
-  position:absolute;right:2px;bottom:2px;
-  background:rgba(0,0,0,.45);border-radius:4px;padding:1px 3px;
-  font-size:9px;font-weight:800;color:#fff
-}
-.pick{
-  position:absolute;top:-8px;width:22px;height:34px;border-radius:6px 6px 12px 12px;
-  background:#f3f4f6;color:#111827;font-size:10px;font-weight:900;
-  display:flex;align-items:center;justify-content:center;
-  transform:translateX(-50%) rotate(18deg);
-  z-index:8;opacity:0;pointer-events:none;
-}
-.pick.run{opacity:1}
-.legend{font-size:12px;color:#d8e3f2;line-height:1.6;margin-top:10px}
-.mini{color:var(--muted)}
-@media(max-width:520px){
-  .actions{grid-template-columns:1fr 1fr}
-  .actions .wide{grid-column:1/-1}
-  .fingerboard{height:390px}
-}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#f4efe5">
+  <meta name="description" content="30 天零基础吉他训练，每天练一点，年底站上舞台。">
+  <title>拾光吉他 · 30 天入门计划</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="wrap">
-  <h1>🎸 模拟吉他 A</h1>
-  <div class="sub">点一下某根弦的某一品 = 按住；再点一次 = 松开。系统会自动识别 Em / Am / C / G / D / Dm。</div>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="brand" data-go="today" aria-label="回到今日课程"><span class="brand-mark">拾</span><span><strong>拾光吉他</strong><small>30 天入门计划</small></span></button>
+      <button class="streak-pill" data-go="progress" aria-label="查看连续练习"><span>🔥</span><b id="headerStreak">0</b><small>天</small></button>
+    </header>
 
-  <section class="card">
-    <div class="detect">
-      <div>
-        <div class="label">当前识别</div>
-        <div class="chordName" id="chordName">—</div>
-        <div class="pattern">6弦 → 1弦：<code id="pattern">—</code></div>
-      </div>
-      <div class="badge" id="badge">等待摆放</div>
-    </div>
+    <main>
+      <section class="view active" id="view-today" data-view="today">
+        <div class="hero">
+          <div class="hero-copy"><p class="eyebrow" id="todayPhase">第一周 · 认识吉他</p><h1><span id="todayDay">第 1 天</span><br><span id="todayTitle">让六根弦发出干净的声音</span></h1><p id="todayIntro">从正确姿势和弦序开始，完成第一次稳定扫弦。</p></div>
+          <div class="hero-art" aria-hidden="true"><span>♪</span><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="daily-summary card"><div class="ring" id="lessonRing"><span id="lessonPercent">0%</span></div><div><small>今日训练</small><strong id="todayDuration">约 35 分钟</strong><p id="lessonProgressText">0 / 5 项完成</p></div><button class="text-button" id="resetLesson">重置</button></div>
+        <div class="section-heading"><div><small>今天的路线</small><h2>一步一步来</h2></div><span id="todayBpm">60 BPM</span></div>
+        <div class="lesson-list" id="lessonList"></div>
+        <div class="coach-note card"><span class="coach-icon">✦</span><div><small>今日提醒</small><p id="todayMistake">声音不干净时，先放慢，不要用力压到手指发痛。</p></div></div>
+        <div class="section-heading"><div><small>完整路径</small><h2>30 天课程地图</h2></div></div>
+        <div class="course-map" id="courseMap"></div>
+      </section>
 
-    <div class="actions">
-      <button class="btn primary" id="strumDown" disabled>↓ 下扫弦</button>
-      <button class="btn primary" id="strumUp" disabled>↑ 上扫弦</button>
-      <button class="btn wide" id="clearBtn">清空按弦</button>
-    </div>
+      <section class="view" id="view-practice" data-view="practice">
+        <div class="page-title"><p class="eyebrow">虚拟吉他</p><h1>先摆准，再扫响</h1><p>点击品位按弦，系统会识别 Em、Am、C、G、D、Dm。</p></div>
+        <div class="recognition card"><div><small>当前识别</small><strong id="chordName">—</strong><code id="chordPattern">等待摆放</code></div><div class="recognition-actions"><button class="icon-button" id="clearFretboard" aria-label="清空按弦">↺</button><span class="recognition-badge" id="recognitionBadge">练习中</span></div></div>
+        <div class="chord-shortcuts" id="chordShortcuts" aria-label="和弦快捷选择"></div>
+        <div class="guitar-card"><div class="headstock"><span>6弦</span><span>5弦</span><span>4弦</span><span>3弦</span><span>2弦</span><span>1弦</span></div><div class="open-state" id="openState"></div><div class="fretboard" id="fretboard" aria-label="交互式六弦吉他指板"></div><div class="string-labels"><span>E</span><span>A</span><span>D</span><span>G</span><span>B</span><span>E</span></div></div>
+        <div class="strum-panel card"><div><small>扫弦试听</small><p id="practiceHint">摆出或选择一个和弦后开始</p></div><div class="strum-buttons"><button class="strum" id="strumDown" disabled><b>↓</b> 下扫</button><button class="strum secondary" id="strumUp" disabled><b>↑</b> 上扫</button></div></div>
+        <p class="touch-note">提示：X 弦不会发声；O 为空弦，会正常发声。首次扫弦会从你的触控手势启动声音。</p>
+      </section>
 
-    <div class="status" id="status">
-      先试试 C 和弦：5弦3品、4弦2品、2弦1品。
-    </div>
-  </section>
+      <section class="view" id="view-quiz" data-view="quiz">
+        <div class="page-title quiz-title"><p class="eyebrow">每日和弦考试</p><h1>今天能认出几个？</h1><p>按照目标和弦摆好位置，再提交答案。</p></div>
+        <div class="quiz-score-row"><div><small>今日正确</small><strong id="quizCorrect">0</strong></div><div><small>连续答对</small><strong id="quizStreak">0</strong></div><div><small>本题用时</small><strong id="quizTimer">0:00</strong></div></div>
+        <div class="quiz-target card"><small>请摆出这个和弦</small><strong id="quizTarget">Em</strong><p id="quizFeedback">准备好就开始摆放</p></div>
+        <div class="guitar-card quiz-guitar"><div class="headstock"><span>6弦</span><span>5弦</span><span>4弦</span><span>3弦</span><span>2弦</span><span>1弦</span></div><div class="open-state" id="quizOpenState"></div><div class="fretboard" id="quizFretboard" aria-label="考试指板"></div><div class="string-labels"><span>E</span><span>A</span><span>D</span><span>G</span><span>B</span><span>E</span></div></div>
+        <div class="quiz-actions"><button class="primary-button" id="submitQuiz">提交答案</button><button class="secondary-button" id="quizClear">清空</button></div>
+      </section>
 
-  <section class="card">
-    <div class="board">
-      <div class="stringHeads" id="stringHeads"></div>
-      <div class="fingerboard" id="fingerboard"></div>
-      <div class="legend">
-        从左到右：<b>6弦 E、5弦 A、4弦 D、3弦 G、2弦 B、1弦 E</b><br>
-        <span class="mini">目前识别的是“按住位置”，不用先标 1/2/3/4 手指编号。</span>
-      </div>
-    </div>
-  </section>
-</div>
+      <section class="view" id="view-progress" data-view="progress">
+        <div class="page-title"><p class="eyebrow">练习记录</p><h1>每一次练习都算数</h1><p>目标不是一天练很久，而是明天还愿意拿起吉他。</p></div>
+        <div class="stats-grid"><div class="stat-card amber"><span>🔥</span><strong id="progressStreak">0</strong><small>连续练习天数</small></div><div class="stat-card green"><span>✓</span><strong id="completedDays">0</strong><small>完成课程</small></div><div class="stat-card blue"><span>♫</span><strong id="quizAccuracy">—</strong><small>和弦正确率</small></div></div>
+        <div class="card stage-card"><div class="section-heading"><div><small>年底目标</small><h2>完整舞台演出</h2></div><span id="stagePercent">0%</span></div><div class="progress-track"><i id="stageBar"></i></div><div class="milestones" id="milestones"></div></div>
+        <div class="card activity-card"><div class="section-heading"><div><small>最近 14 天</small><h2>练习节奏</h2></div></div><div class="activity-grid" id="activityGrid"></div></div>
+        <div class="card settings-card"><div><strong>当前课程日</strong><small>想复习或跳回某一天？</small></div><select id="dayPicker" aria-label="选择课程日"></select></div>
+        <button class="danger-link" id="clearProgress">清除本机进度</button>
+      </section>
+    </main>
 
-<script>
-(function(){
-"use strict";
-
-var strings=[6,5,4,3,2,1];
-var openMidi={6:40,5:45,4:50,3:55,2:59,1:64};
-var openLetter={6:"E",5:"A",4:"D",3:"G",2:"B",1:"E"};
-var noteNames=["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
-var audioCtx=null;
-var selected={};
-var animationTimers=[];
-
-var chords={
-  "Em":{keys:["5-2","4-2"],pattern:["0","2","2","0","0","0"]},
-  "Am":{keys:["4-2","3-2","2-1"],pattern:["X","0","2","2","1","0"]},
-  "C": {keys:["5-3","4-2","2-1"],pattern:["X","3","2","0","1","0"]},
-  "G": {keys:["6-3","5-2","1-3"],pattern:["3","2","0","0","0","3"]},
-  "D": {keys:["3-2","2-3","1-2"],pattern:["X","X","0","2","3","2"]},
-  "Dm":{keys:["3-2","2-3","1-1"],pattern:["X","X","0","2","3","1"]}
-};
-
-function noteName(midi){return noteNames[midi%12]+(Math.floor(midi/12)-1)}
-function freq(midi){return 440*Math.pow(2,(midi-69)/12)}
-function key(s,f){return s+"-"+f}
-function sx(index){return (index/5)*100}
-function fy(fret){return ((fret-.5)/6)*100}
-
-function ensureAudio(){
-  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-  if(audioCtx.state==="suspended")audioCtx.resume();
-}
-function pluck(midi,start,vol){
-  var f=freq(midi),out=audioCtx.createGain();
-  out.gain.setValueAtTime(.0001,start);
-  out.gain.exponentialRampToValueAtTime(.17*(vol||1),start+.008);
-  out.gain.exponentialRampToValueAtTime(.0001,start+1.45);
-  out.connect(audioCtx.destination);
-  [1,2,3,4].forEach(function(h,i){
-    var o=audioCtx.createOscillator(),g=audioCtx.createGain();
-    o.type=i===0?"triangle":"sine";
-    o.frequency.value=f*h;
-    g.gain.value=[1,.33,.14,.055][i];
-    o.connect(g);g.connect(out);o.start(start);o.stop(start+1.5);
-  });
-}
-function preview(midi){
-  try{ensureAudio();pluck(midi,audioCtx.currentTime,.9)}catch(e){}
-}
-function sortedKeys(obj){return Object.keys(obj).sort()}
-function sameKeys(a,b){
-  if(a.length!==b.length)return false;
-  for(var i=0;i<a.length;i++)if(a[i]!==b[i])return false;
-  return true;
-}
-function detectChord(){
-  var current=sortedKeys(selected),names=Object.keys(chords);
-  for(var i=0;i<names.length;i++){
-    var name=names[i];
-    if(sameKeys(current,chords[name].keys.slice().sort()))return name;
-  }
-  return null;
-}
-function setStatus(name){
-  var chordEl=document.getElementById("chordName");
-  var badge=document.getElementById("badge");
-  var pattern=document.getElementById("pattern");
-  var status=document.getElementById("status");
-  var down=document.getElementById("strumDown");
-  var up=document.getElementById("strumUp");
-
-  if(name){
-    chordEl.textContent=name;
-    chordEl.classList.add("known");
-    badge.textContent="已识别";
-    badge.classList.add("known");
-    pattern.textContent=chords[name].pattern.join(" ");
-    status.textContent="✅ 已识别为 "+name+"。现在可以点击扫弦试听。";
-    status.classList.add("good");
-    down.disabled=false;up.disabled=false;
-  }else{
-    chordEl.textContent=Object.keys(selected).length?"…":"—";
-    chordEl.classList.remove("known");
-    badge.textContent=Object.keys(selected).length?"继续摆放":"等待摆放";
-    badge.classList.remove("known");
-    pattern.textContent="—";
-    status.textContent=Object.keys(selected).length
-      ?"还没匹配到基础和弦。继续增加、删除或调整位置。"
-      :"先试试 C 和弦：5弦3品、4弦2品、2弦1品。";
-    status.classList.remove("good");
-    down.disabled=true;up.disabled=true;
-  }
-}
-function renderHeader(){
-  var heads=document.getElementById("stringHeads");
-  heads.innerHTML="";
-  strings.forEach(function(s,index){
-    var d=document.createElement("div");
-    d.className="stringHead";
-    d.style.left=sx(index)+"%";
-    d.innerHTML="<b>"+s+"弦</b>"+openLetter[s];
-    heads.appendChild(d);
-  });
-}
-function renderBoard(){
-  var fb=document.getElementById("fingerboard");
-  fb.innerHTML="";
-
-  var pick=document.createElement("div");
-  pick.className="pick";
-  pick.id="pick";
-  pick.textContent="PICK";
-  fb.appendChild(pick);
-
-  for(var f=0;f<=6;f++){
-    var wire=document.createElement("div");
-    wire.className="fret"+(f===0?" nut":"");
-    wire.style.top=(f/6*100)+"%";
-    fb.appendChild(wire);
-  }
-
-  strings.forEach(function(s,index){
-    var line=document.createElement("div");
-    line.className="string s"+s;
-    line.id="string-"+s;
-    line.style.left=sx(index)+"%";
-    fb.appendChild(line);
-  });
-
-  for(var fret=1;fret<=6;fret++){
-    strings.forEach(function(s,index){
-      var k=key(s,fret);
-      var hit=document.createElement("div");
-      hit.className="hit";
-      hit.style.left=sx(index)+"%";
-      hit.style.top=fy(fret)+"%";
-
-      if(selected[k]){
-        var dot=document.createElement("div");
-        dot.className="pressDot";
-        dot.textContent="●";
-        hit.appendChild(dot);
-      }
-
-      var n=document.createElement("span");
-      n.className="note";
-      n.textContent=noteName(openMidi[s]+fret);
-      hit.appendChild(n);
-
-      hit.addEventListener("click",function(){
-        if(selected[k])delete selected[k];
-        else selected[k]=true;
-        preview(openMidi[s]+fret);
-        renderBoard();
-        setStatus(detectChord());
-      });
-      fb.appendChild(hit);
-    });
-  }
-}
-function clearTimers(){
-  animationTimers.forEach(function(id){clearTimeout(id)});
-  animationTimers=[];
-  strings.forEach(function(s){
-    var el=document.getElementById("string-"+s);
-    if(el)el.classList.remove("vibrate");
-  });
-  var p=document.getElementById("pick");
-  if(p)p.classList.remove("run");
-}
-function animateStrum(direction){
-  var name=detectChord();
-  if(!name)return;
-  clearTimers();
-  ensureAudio();
-
-  var pattern=chords[name].pattern;
-  var sequence=direction==="down"?[6,5,4,3,2,1]:[1,2,3,4,5,6];
-  var indexMap={6:0,5:1,4:2,3:3,2:4,1:5};
-  var audible=sequence.filter(function(s){return pattern[indexMap[s]]!=="X"});
-  var pick=document.getElementById("pick");
-  pick.classList.add("run");
-
-  audible.forEach(function(s,step){
-    animationTimers.push(setTimeout(function(){
-      var idx=strings.indexOf(s);
-      pick.style.left=sx(idx)+"%";
-
-      var line=document.getElementById("string-"+s);
-      if(line){
-        line.classList.remove("vibrate");
-        void line.offsetWidth;
-        line.classList.add("vibrate");
-      }
-
-      var pat=pattern[indexMap[s]];
-      var fret=pat==="0"?0:parseInt(pat,10);
-      pluck(openMidi[s]+fret,audioCtx.currentTime,1);
-    },step*75));
-  });
-
-  animationTimers.push(setTimeout(function(){
-    pick.classList.remove("run");
-  },audible.length*75+450));
-}
-
-document.getElementById("clearBtn").addEventListener("click",function(){
-  selected={};clearTimers();renderBoard();setStatus(null);
-});
-document.getElementById("strumDown").addEventListener("click",function(){animateStrum("down")});
-document.getElementById("strumUp").addEventListener("click",function(){animateStrum("up")});
-
-renderHeader();
-renderBoard();
-setStatus(null);
-})();
-</script>
+    <nav class="bottom-nav" aria-label="主要功能"><button class="active" data-tab="today"><span>⌂</span><small>今日</small></button><button data-tab="practice"><span>♬</span><small>练习</small></button><button data-tab="quiz"><span>◎</span><small>考试</small></button><button data-tab="progress"><span>↗</span><small>进度</small></button></nav>
+  </div>
+  <script src="course-data.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
